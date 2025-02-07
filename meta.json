@@ -1,0 +1,26 @@
+{
+  "$schema": "https://dl.viam.dev/module.schema.json",
+  "module_id": "cjnj193:fake-slam",
+  "visibility": "private",
+  "url": "",
+  "description": "Modular slam service: fake",
+  "models": [
+    {
+      "api": "rdk:service:slam",
+      "model": "cjnj193:fake-slam:fake",
+      "short_description": "Provide a short (100 characters or less) description of this model here",
+      "markdown_link": "README.md#model-cjnj193fake-slamfake"
+    }
+  ],
+  "entrypoint": "bin/fake-slam",
+  "first_run": "",
+  "build": {
+    "build": "make module",
+    "setup": "make setup",
+    "path": "bin/module.tar.gz",
+    "arch": [
+      "linux/amd64",
+      "linux/arm64"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "module_name": "fake-slam",
+  "namespace": "cjnj193",
+  "language": "go",
+  "resource_type": "service",
+  "resource_subtype": "slam",
+  "model_name": "fake",
+  "enable_cloud_build": true,
+  "initialize_git": false,
+  "generator_version": "0.1.0",
+  "generated_on": "2025-02-07T19:44:49.181893Z"
+}
