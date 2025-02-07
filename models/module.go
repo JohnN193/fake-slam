@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"math/rand"
+	"sync"
 
+	"github.com/golang/geo/r3"
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
 	"go.viam.com/rdk/services/slam"
@@ -37,6 +40,8 @@ func init() {
 }
 
 type Config struct {
+	NextMap      int  `json:"calls_till_next_map"`
+	IsLocalizing bool `json:"is_localizing"`
 	/*
 		Put config attributes here. There should be public/exported fields
 		with a `json` parameter at the end of each attribute.
@@ -74,7 +79,10 @@ type fakeSlamFake struct {
 
 	cancelCtx  context.Context
 	cancelFunc func()
+	nextMap    int
+	mode       slam.MappingMode
 
+	mu            sync.Mutex
 	pcd           [][]byte
 	internalState []byte
 	cnt           int
@@ -101,9 +109,19 @@ func newFakeSlamFake(ctx context.Context, deps resource.Dependencies, rawConf re
 		cfg:        conf,
 		cancelCtx:  cancelCtx,
 		cancelFunc: cancelFunc,
+		nextMap:    conf.NextMap,
+	}
+	if s.nextMap == 0 {
+		s.nextMap = 5
+	}
+	if conf.IsLocalizing {
+		s.mode = slam.MappingModeLocalizationOnly
+	} else {
+		s.mode = slam.MappingModeNewMap
 	}
 
 	// using this as a placeholder image. need to determine the right way to have the module use it
+	s.pcd = make([][]byte, 3)
 	s.pcd[0], err = pcFile2.ReadFile("pointcloud_2.pcd")
 	if err != nil {
 		return nil, err
@@ -128,16 +146,22 @@ func (s *fakeSlamFake) Name() resource.Name {
 }
 
 func (s *fakeSlamFake) Position(ctx context.Context) (spatialmath.Pose, error) {
-	return spatialmath.NewZeroPose(), nil
+
+	return spatialmath.NewPose(r3.Vector{X: -rand.Float64()*12000 + 2000, Y: -rand.Float64()*12000 + 2000}, &spatialmath.EulerAngles{Yaw: rand.Float64() * 360}), nil
 }
 
 func (s *fakeSlamFake) PointCloudMap(ctx context.Context, returnEditedMap bool) (func() ([]byte, error), error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.cnt++
-	whichPCD := s.cnt / 10 % 3
+	whichPCD := s.cnt / s.nextMap % 3
 	return toChunkedFunc(s.pcd[whichPCD]), nil
 }
 
 func (s *fakeSlamFake) InternalState(ctx context.Context) (func() ([]byte, error), error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return toChunkedFunc(s.internalState), nil
 }
 
@@ -158,7 +182,7 @@ func toChunkedFunc(b []byte) func() ([]byte, error) {
 }
 
 func (s *fakeSlamFake) Properties(ctx context.Context) (slam.Properties, error) {
-	return slam.Properties{CloudSlam: false, MappingMode: slam.MappingModeLocalizationOnly, InternalStateFileType: ".pbstream"}, nil
+	return slam.Properties{CloudSlam: false, MappingMode: s.mode, InternalStateFileType: ".pbstream"}, nil
 }
 
 func (s *fakeSlamFake) DoCommand(ctx context.Context, cmd map[string]interface{}) (map[string]interface{}, error) {

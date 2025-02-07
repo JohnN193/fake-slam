@@ -2,7 +2,10 @@ module fake-slam
 
 go 1.23
 
-require go.viam.com/rdk v0.61.0
+require (
+	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551
+	go.viam.com/rdk v0.61.0
+)
 
 require (
 	cloud.google.com/go v0.115.1 // indirect
@@ -44,7 +47,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
